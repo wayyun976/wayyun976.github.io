@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>WAY云帖子 · 玻璃感社区</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            /* 背景图片由用户自行替换 — 可通过JS或内联style修改，这里预留变量，用户可在:root或者直接修改背景图 */
+            background: var(--bg-url, url('https://picsum.photos/id/104/1920/1080?grayscale')) center/cover no-repeat fixed;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Roboto', sans-serif;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        /* 全局玻璃效果容器 */
+        .glass-app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 18px 16px 30px;
+        }
+
+        /* 玻璃卡片公用 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(255,255,255,0.4) inset;
+            transition: all 0.2s ease;
+        }
+
+        /* 头部 */
+        .hero {
+            text-align: center;
+            padding: 20px 16px;
+            margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1A2A3A, #2C4A5E);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .hero .sub {
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(4px);
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 40px;
+            color: #1f2e36;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        /* 用户状态栏 */
+        .user-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        .user-info-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 20px;
+            border-radius: 60px;
+            background: rgba(255,255,240,0.5);
+            backdrop-filter: blur(8px);
+        }
+        .username-display {
+            font-weight: 600;
+            color: #1e3a4d;
+        }
+        .logout-btn, .login-btn {
+            background: rgba(0,0,0,0.2);
+            border: none;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(2px);
+            transition: 0.2s;
+        }
+        .logout-btn:hover, .login-btn:hover {
+            background: rgba(0,0,0,0.4);
+            color: white;
+        }
+
+        /* 分类卡片网格（可动态增加，内置三个示例） */
+        .categories-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .cat-item {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 8px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.15s, background 0.2s;
+        }
+        .cat-item.active-cat {
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(255,255,240,0.9);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .cat-img {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 24px;
+            margin-bottom: 10px;
+            background: rgba(255,255,245,0.5);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .cat-name {
+            font-weight: 700;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.2);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            backdrop-filter: blur(2px);
+        }
+        .add-cat-btn {
+            background: rgba(255,255,220,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .add-cat-btn span:first-child {
+            font-size: 2rem;
+            font-weight: 300;
+        }
+
+        /* 发布帖子区域 */
+        .post-area {
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+        .post-area h3 {
+            font-size: 1.25rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        select, textarea, input {
+            width: 100%;
+            background: rgba(255,255,245,0.7);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 24px;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(4px);
+            margin-bottom: 12px;
+            outline: none;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .post-btn {
+            background: #2c5f6e;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 40px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .post-btn:hover {
+            background: #1f4855;
+            transform: scale(0.98);
+        }
+
+        /* 帖子列表 */
+        .posts-feed {
+            margin-bottom: 30px;
+        }
+        .post-card {
+            padding: 16px;
+            margin-bottom: 14px;
+            transition: 0.1s;
+        }
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .post-cat-tag {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .post-author {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        .post-content {
+            margin: 10px 0 12px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .post-actions {
+            display: flex;
+            gap: 24px;
+            margin-top: 8px;
+        }
+        .action-btn {
+            background: transparent;
+            border: none;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 40px;
+            transition: 0.1s;
+            color: #2c3e44;
+        }
+        .action-btn:hover {
+            background: rgba(255,255,210,0.6);
+        }
+
+        /* 底部栏 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(245, 245, 250, 0.7);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 20px 18px;
+            border-top: 1px solid rgba(255,255,245,0.8);
+            border-radius: 30px 30px 0 0;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: transparent;
+            border: none;
+            font-size: 0.7rem;
+            gap: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 30px;
+            transition: 0.1s;
+            color: #1f3b46;
+        }
+        .nav-item.active {
+            background: rgba(255,255,245,0.7);
+            backdrop-filter: blur(4px);
+        }
+        .nav-icon {
+            font-size: 1.4rem;
+        }
+
+        /* 联系我 + 为什么选择WAY 玻璃面板 */
+        .info-section {
+            display: flex;
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .info-block {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .info-block strong {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+        .info-block p {
+            font-size: 0.75rem;
+        }
+
+        /* 模态框 (登录/注册/人机验证) */
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            width: 85%;
+            max-width: 340px;
+            background: rgba(255,255,245,0.85);
+            backdrop-filter: blur(24px);
+            border-radius: 48px;
+            padding: 28px 20px;
+            border: 1px solid rgba(255,255,255,0.7);
+            text-align: center;
+        }
+        .modal-card input {
+            margin-bottom: 14px;
+            background: rgba(255,255,250,0.9);
+        }
+        .captcha-box {
+            background: #2e4a5e20;
+            padding: 12px;
+            border-radius: 28px;
+            margin: 12px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .captcha-code {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.4rem;
+            letter-spacing: 6px;
+            background: #1e2f38;
+            color: #f0f0e0;
+            padding: 6px 12px;
+            border-radius: 36px;
+            user-select: none;
+        }
+        .captcha-input {
+            flex: 1;
+            margin: 0;
+        }
+        .refresh-captcha {
+            background: rgba(0,0,0,0.2);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 32px;
+            cursor: pointer;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .error-msg {
+            color: #bc3900;
+            font-size: 0.7rem;
+            margin-top: 6px;
+        }
+
+        /* 信息抽屉 (点赞评论统计) */
+        .info-drawer {
+            background: rgba(30,40,45,0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        /* 隐藏类 */
+        .hidden {
+            display: none;
+        }
+        button {
+            font-family: inherit;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<div class="glass-app" id="app">
+    <!-- 头部欢迎语 -->
+    <div class="hero glass-card">
+        <h1>WAY云帖子 🌤️</h1>
+        <div class="sub">玻璃感 · 自由分享</div>
+    </div>
+
+    <!-- 用户栏 -->
+    <div class="user-bar">
+        <div class="user-info-box glass-card" style="padding: 6px 16px;">
+            <span id="greetingMsg">未登录</span>
+            <button id="authBtn" class="login-btn">登录/注册</button>
+        </div>
+    </div>
+
+    <!-- 分类卡片区 (图片+文字, 极品飞车集结的上面添加图片) -->
+    <div class="categories-grid" id="categoriesContainer">
+        <!-- 动态js渲染，保证可自定义图片和文字 -->
+    </div>
+
+    <!-- 发帖区域 -->
+    <div class="post-area glass-card">
+        <h3>📝 发布新帖子</h3>
+        <select id="postCategorySelect"></select>
+        <textarea id="postContentInput" placeholder="写点什么... 分享你的云想法 ☁️"></textarea>
+        <button id="publishBtn" class="post-btn">✨ 发布帖子</button>
+    </div>
+
+    <!-- 帖子流 + 信息聚合展示 (底部信息栏会展示点赞评论数量) -->
+    <div id="postsContainer" class="posts-feed"></div>
+
+    <!-- 联系我 + 为什么选择WAY 两个模块 -->
+    <div class="info-section">
+        <div class="info-block glass-card" id="contactBtn">
+            <strong>📞 联系我</strong>
+            <p>主播阿念 · 商务合作</p>
+        </div>
+        <div class="info-block glass-card" id="whyWayBtn">
+            <strong>✨ 为什么选择WAY？</strong>
+            <p>纯净玻璃界面 · 云端记忆</p>
+        </div>
+    </div>
+
+    <!-- 动态底部栏 -->
+    <div class="bottom-nav">
+        <button class="nav-item" data-nav="home"><span class="nav-icon">🏠</span><span>主页</span></button>
+        <button class="nav-item" data-nav="info"><span class="nav-icon">❤️💬</span><span>信息</span></button>
+        <button class="nav-item" data-nav="profile"><span class="nav-icon">👤</span><span>我的</span></button>
+    </div>
+</div>
+
+<script>
+    // ---------- 存储 ----------
+    let currentUser = localStorage.getItem('way_currentUser') || null;
+    // 用户数据 { username, password }
+    let users = JSON.parse(localStorage.getItem('way_users')) || [];
+    // 帖子数组 { id, author, categoryId, content, likes, comments, timestamp }
+    let posts = JSON.parse(localStorage.getItem('way_posts')) || [];
+    // 分类数组 { id, name, imgUrl }  初始三个 + 可动态添加, 极品飞车集结上面加图片
+    let categories = JSON.parse(localStorage.getItem('way_categories')) || [
+        { id: 'cat_nfs', name: '极品飞车集结', imgUrl: 'https://placehold.co/200x200/e0e7ff/2c3e50?text=NFS' },
+        { id: 'cat_mc', name: '我的世界', imgUrl: 'https://placehold.co/200x200/d9f0e0/2c5e3a?text=Minecraft' },
+        { id: 'cat_other', name: '其他贴子（日常）', imgUrl: 'https://placehold.co/200x200/ffe0cc/aa6f3c?text=日常' }
+    ];
+
+    // 辅助函数存储
+    function saveAll() {
+        localStorage.setItem('way_users', JSON.stringify(users));
+        localStorage.setItem('way_posts', JSON.stringify(posts));
+        localStorage.setItem('way_categories', JSON.stringify(categories));
+        if (currentUser) localStorage.setItem('way_currentUser', currentUser);
+        else localStorage.removeItem('way_currentUser');
+    }
+
+    // 当前选中的分类(用于主页过滤) 'all' 或分类id
+    let currentHomeFilter = 'all';
+    let currentNav = 'home';  // home, info, profile
+
+    // 渲染分类卡片 (带图片)
+    function renderCategories() {
+        const container = document.getElementById('categoriesContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        categories.forEach(cat => {
+            const card = document.createElement('div');
+            card.className = `cat-item glass-card ${currentHomeFilter === cat.id ? 'active-cat' : ''}`;
+            card.setAttribute('data-cat-id', cat.id);
+            // 图片 + 文字
+            const img = document.createElement('img');
+            img.src = cat.imgUrl;
+            img.alt = cat.name;
+            img.className = 'cat-img';
+            img.onerror = () => { img.src = 'https://placehold.co/200x200/cccccc/666?text=Way'; };
+            const span = document.createElement('span');
+            span.className = 'cat-name';
+            span.innerText = cat.name;
+            card.appendChild(img);
+            card.appendChild(span);
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentHomeFilter = cat.id;
+                currentNav = 'home';
+                renderAllUI();
+            });
+            container.appendChild(card);
+        });
+        // 添加新分类按钮(+)
+        const addCard = document.createElement('div');
+        addCard.className = 'cat-item glass-card add-cat-btn';
+        addCard.innerHTML = `<span>➕</span><span style="font-size:0.7rem">新增分类</span>`;
+        addCard.addEventListener('click', () => {
+            let newName = prompt('输入新分类名称（例如：原神）');
+            if (newName && newName.trim()) {
+                let newId = 'cat_' + Date.now();
+                let imgUrl = prompt('请输入图片URL (留空使用默认)', 'https://placehold.co/200x200/d9d0ff/5e4b8b?text=WAY');
+                if (!imgUrl) imgUrl = 'https://placehold.co/200x200/d9d0ff/5e4b8b?text=WAY';
+                categories.push({ id: newId, name: newName.trim(), imgUrl: imgUrl });
+                saveAll();
+                renderCategories();
+                renderPostSelect();
+                renderAllUI();
+            }
+        });
+        container.appendChild(addCard);
+    }
+
+    // 渲染发帖下拉选项
+    function renderPostSelect() {
+        const select = document.getElementById('postCategorySelect');
+        if (!select) return;
+        select.innerHTML = '';
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.innerText = cat.name;
+            select.appendChild(option);
+        });
+    }
+
+    // 发布新帖 (需要登录)
+    function publishPost() {
+        if (!currentUser) {
+            alert('请先登录/注册后发布帖子');
+            openAuthModal();
+            return;
+        }
+        const catId = document.getElementById('postCategorySelect').value;
+        const content = document.getElementById('postContentInput').value.trim();
+        if (!content) {
+            alert('内容不能为空');
+            return;
+        }
+        const newPost = {
+            id: Date.now(),
+            author: currentUser,
+            categoryId: catId,
+            content: content,
+            likes: 0,
+            comments: 0,
+            timestamp: new Date().toISOString()
+        };
+        posts.unshift(newPost);
+        saveAll();
+        document.getElementById('postContentInput').value = '';
+        renderAllUI();
+    }
+
+    // 处理点赞评论（简单模拟，点赞增加likes，评论弹窗加comments）
+    function likePost(postId) {
+        if (!currentUser) { alert('请先登录'); openAuthModal(); return; }
+        const post = posts.find(p => p.id == postId);
+        if (post) { post.likes += 1; saveAll(); renderAllUI(); }
+    }
+    function commentPost(postId) {
+        if (!currentUser) { alert('请先登录'); openAuthModal(); return; }
+        let msg = prompt('评论内容（简单模拟）:');
+        if (msg && msg.trim()) {
+            const post = posts.find(p => p.id == postId);
+            if (post) { post.comments += 1; saveAll(); renderAllUI(); alert('评论成功+1'); }
+        }
+    }
+
+    // 渲染帖子 (根据当前筛选home filter)
+    function renderPosts() {
+        const container = document.getElementById('postsContainer');
+        if (!container) return;
+        let filteredPosts = posts;
+        if (currentHomeFilter !== 'all' && currentNav === 'home') {
+            filteredPosts = posts.filter(p => p.categoryId === currentHomeFilter);
+        } else {
+            if (currentNav === 'home') filteredPosts = posts;
+            else if (currentNav === 'profile' && currentUser) {
+                filteredPosts = posts.filter(p => p.author === currentUser);
+            } else if (currentNav === 'profile' && !currentUser) {
+                container.innerHTML = `<div class="glass-card" style="padding:20px; text-align:center">登录后查看我的帖子❤️</div>`;
+                return;
+            }
+        }
+        if (filteredPosts.length === 0) {
+            container.innerHTML = `<div class="glass-card" style="padding:30px; text-align:center">✨ 暂无帖子，发布第一条吧 ✨</div>`;
+            return;
+        }
+        container.innerHTML = '';
+        filteredPosts.forEach(post => {
+            const catObj = categories.find(c => c.id === post.categoryId);
+            const catName = catObj ? catObj.name : '未知分类';
+            const postDiv = document.createElement('div');
+            postDiv.className = 'post-card glass-card';
+            postDiv.innerHTML = `
+                <div class="post-header">
+                    <span class="post-cat-tag"># ${catName}</span>
+                    <span class="post-author">✍️ ${post.author}</span>
+                </div>
+                <div class="post-content">${escapeHtml(post.content)}</div>
+                <div class="post-actions">
+                    <button class="action-btn like-btn" data-id="${post.id}">❤️ ${post.likes}</button>
+                    <button class="action-btn comment-btn" data-id="${post.id}">💬 ${post.comments}</button>
+                </div>
+                <div style="font-size:0.6rem; opacity:0.6; margin-top:6px;">${new Date(post.timestamp).toLocaleString()}</div>
+            `;
+            container.appendChild(postDiv);
+        });
+        // 绑定动态按钮
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => { likePost(btn.dataset.id); });
+        });
+        document.querySelectorAll('.comment-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => { commentPost(btn.dataset.id); });
+        });
+    }
+
+    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // 信息面板: 查看总点赞数/评论数，以及我的互动
+    function renderInfoPanel() {
+        const container = document.getElementById('postsContainer');
+        if (!container) return;
+        const totalLikes = posts.reduce((acc, p) => acc + p.likes, 0);
+        const totalComments = posts.reduce((acc, p) => acc + p.comments, 0);
+        let myStats = { likes:0, comments:0 };
+        if(currentUser){
+            const myPosts = posts.filter(p=>p.author === currentUser);
+            myStats.likes = myPosts.reduce((a,b)=>a+b.likes,0);
+            myStats.comments = myPosts.reduce((a,b)=>a+b.comments,0);
+        }
+        container.innerHTML = `
+            <div class="info-drawer glass-card">
+                <h3>📊 全局动态</h3>
+                <p>🔥 总点赞数: ${totalLikes}</p>
+                <p>💬 总评论数: ${totalComments}</p>
+                ${currentUser ? `<hr style="margin:12px 0"/><h4>👤 ${currentUser} 的帖子数据</h4><p>❤️ 收到点赞: ${myStats.likes}</p><p>🗨️ 收到评论: ${myStats.comments}</p>` : '<p style="margin-top:12px">登录后可查看个人互动数据~</p>'}
+            </div>
+        `;
+    }
+
+    // 我的面板: 显示个人信息 + 管理帖子占位
+    function renderProfile() {
+        const container = document.getElementById('postsContainer');
+        if (!currentUser) {
+            container.innerHTML = `<div class="glass-card" style="padding:28px; text-align:center">🔐 尚未登录<br/><button id="profileAuthBtn" class="post-btn" style="margin-top:12px">立即登录/注册</button></div>`;
+            const btn = document.getElementById('profileAuthBtn');
+            if(btn) btn.addEventListener('click', ()=>openAuthModal());
+            return;
+        }
+        const userPostsCount = posts.filter(p=>p.author===currentUser).length;
+        container.innerHTML = `
+            <div class="glass-card" style="padding:24px">
+                <h3>🌟 我的云端档案</h3>
+                <p>👤 用户名: ${currentUser}</p>
+                <p>📄 我的帖子数: ${userPostsCount}</p>
+                <button id="myPostFilterBtn" class="post-btn" style="margin-top:12px; background:#476b6b">查看我的帖子</button>
+            </div>
+        `;
+        const filterBtn = document.getElementById('myPostFilterBtn');
+        if(filterBtn) filterBtn.addEventListener('click', ()=>{
+            currentNav = 'profile';
+            renderAllUI();
+        });
+    }
+
+    // 导航控制
+    function setActiveNav(nav) {
+        currentNav = nav;
+        if(nav === 'home') currentHomeFilter = 'all';
+        renderAllUI();
+    }
+
+    // 主渲染UI调度
+    function renderAllUI() {
+        renderCategories();
+        renderPostSelect();
+        // 根据导航渲染不同内容区
+        if (currentNav === 'home') {
+            renderPosts();
+        } else if (currentNav === 'info') {
+            renderInfoPanel();
+        } else if (currentNav === 'profile') {
+            renderProfile();
+        }
+        // 更新用户问候
+        const greetingSpan = document.getElementById('greetingMsg');
+        const authBtn = document.getElementById('authBtn');
+        if(currentUser){
+            greetingSpan.innerText = `☁️ ${currentUser}`;
+            authBtn.innerText = '退出';
+        } else {
+            greetingSpan.innerText = '未登录';
+            authBtn.innerText = '登录/注册';
+        }
+        // 底部样式高亮
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            if(btn.dataset.nav === currentNav) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    }
+
+    // ---------- 登录/注册 + 人机验证 ----------
+    let currentCaptcha = '';
+    function generateCaptcha() { return Math.floor(1000+Math.random()*9000).toString(); }
+    function refreshCaptcha() { currentCaptcha = generateCaptcha(); return currentCaptcha; }
+
+    function openAuthModal() {
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'modal';
+        let captchaText = refreshCaptcha();
+        modalDiv.innerHTML = `
+            <div class="modal-card">
+                <h3>🎫 欢迎 WAY 云帖</h3>
+                <input type="text" id="authUsername" placeholder="用户名" autocomplete="off">
+                <input type="password" id="authPassword" placeholder="密码">
+                <div class="captcha-box">
+                    <span class="captcha-code">${captchaText}</span>
+                    <input type="text" id="captchaInput" class="captcha-input" placeholder="验证码">
+                    <button id="refreshCaptchaBtn" class="refresh-captcha">🔄</button>
+                </div>
+                <div class="modal-buttons">
+                    <button id="doLoginBtn">登录</button>
+                    <button id="doRegBtn">注册</button>
+                </div>
+                <div id="authErrorMsg" class="error-msg"></div>
+            </div>
+        `;
+        document.body.appendChild(modalDiv);
+        const refreshBtn = modalDiv.querySelector('#refreshCaptchaBtn');
+        const loginBtn = modalDiv.querySelector('#doLoginBtn');
+        const regBtn = modalDiv.querySelector('#doRegBtn');
+        const closeModal = () => modalDiv.remove();
+        const checkCaptcha = () => {
+            const inputVal = modalDiv.querySelector('#captchaInput').value;
+            if(inputVal !== currentCaptcha) { document.getElementById('authErrorMsg').innerText = '人机验证失败'; return false; }
+            return true;
+        };
+        loginBtn.onclick = () => {
+            if(!checkCaptcha()) return;
+            const user = modalDiv.querySelector('#authUsername').value.trim();
+            const pwd = modalDiv.querySelector('#authPassword').value;
+            const found = users.find(u => u.username === user && u.password === pwd);
+            if(found){ currentUser = user; saveAll(); closeModal(); renderAllUI(); }
+            else { document.getElementById('authErrorMsg').innerText = '用户名或密码错误'; }
+        };
+        regBtn.onclick = () => {
+            if(!checkCaptcha()) return;
+            const user = modalDiv.querySelector('#authUsername').value.trim();
+            const pwd = modalDiv.querySelector('#authPassword').value;
+            if(!user || !pwd){ document.getElementById('authErrorMsg').innerText = '用户名/密码不能为空'; return; }
+            if(users.find(u=>u.username === user)){ document.getElementById('authErrorMsg').innerText = '用户已存在'; return; }
+            users.push({ username: user, password: pwd });
+            currentUser = user;
+            saveAll();
+            closeModal();
+            renderAllUI();
+        };
+        refreshBtn.onclick = () => {
+            const newCode = refreshCaptcha();
+            modalDiv.querySelector('.captcha-code').innerText = newCode;
+            document.getElementById('captchaInput').value = '';
+        };
+        modalDiv.addEventListener('click', (e) => { if(e.target === modalDiv) closeModal(); });
+    }
+
+    // 退出逻辑
+    function logout() {
+        if(currentUser){
+            currentUser = null;
+            localStorage.removeItem('way_currentUser');
+            renderAllUI();
+        } else {
+            openAuthModal();
+        }
+    }
+
+    // 联系我 & 为什么选择WAY
+    document.addEventListener('click', (e) => {
+        if(e.target.closest('#contactBtn')) alert('📧 联系主播阿念：way_nian@example.com\n🎮 商务合作私信官方');
+        if(e.target.closest('#whyWayBtn')) alert('✨ 为什么选择WAY？\n• 玻璃质感视觉盛宴\n• 自由创建分类+图片自定义\n• 数据本地存储，轻量化云帖子\n• 人机验证保障社区纯净');
+    });
+
+    // 底部事件绑定
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const navVal = btn.dataset.nav;
+            if(navVal === 'home') setActiveNav('home');
+            else if(navVal === 'info') setActiveNav('info');
+            else if(navVal === 'profile') setActiveNav('profile');
+        });
+    });
+    document.getElementById('publishBtn').addEventListener('click', publishPost);
+    document.getElementById('authBtn').addEventListener('click', () => { if(currentUser) logout(); else openAuthModal(); });
+
+    // 初始化渲染
+    renderAllUI();
+</script>
+</body>
+</html>
