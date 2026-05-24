@@ -62,8 +62,10 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const SUPABASE_URL = 'https://xyibqrwjdmzbvvitkkg.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_xS_8ujkIqefLcvd7XXMN4g_pr0E7liU';
+    // ===== 修正后的 Supabase 配置 =====
+    const SUPABASE_URL = 'https://lxyibqrwjdmzbvvitkkg.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_xs_8ujk1qefLcvd7XXMN4g_pr0E7liU';
+    
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let currentUser = localStorage.getItem('way_currentUser') || null;
     const categories = [
@@ -74,7 +76,13 @@
     let currentHomeFilter = 'all';
     let currentNav = 'home';
 
-    async function loadPosts() { const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false }); if (error) return []; return data || []; }
+    async function loadPosts() { 
+        try {
+            const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false }); 
+            if (error) { console.error('loadPosts error:', error); return []; }
+            return data || []; 
+        } catch(e) { console.error(e); return []; }
+    }
     async function addPost(post) { const { error } = await supabase.from('posts').insert([post]); if (error) alert('发布失败：' + error.message); }
     async function updatePostLikes(id, newLikes) { await supabase.from('posts').update({ likes: newLikes }).eq('id', id); }
     async function updatePostComments(id, newComments) { await supabase.from('posts').update({ comments: newComments }).eq('id', id); }
